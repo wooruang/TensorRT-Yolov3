@@ -19,7 +19,7 @@ namespace Tn
 
         string strLine;  
         list<string> files;
-        while( getline(file,strLine) )                               
+        while( getline(file,strLine) )
             files.push_back(strLine);
 
         file.close();

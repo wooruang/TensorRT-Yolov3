@@ -1,11 +1,12 @@
 //
 // Created by wooruang on 19. 4. 18.
 //
+
 #include <utils.hpp>
 
 #include <chrono>
 
-std::vector<float> prepareImage(cv::Mat & img, int channel, int net_width, int net_height)
+std::vector<float> prepareImage(cv::Mat const & img, int channel, int net_width, int net_height)
 {
     float scale = std::min(float(net_width)/img.cols,float(net_height)/img.rows);
     auto scaleSize = cv::Size(img.cols * scale,img.rows * scale);
@@ -39,7 +40,6 @@ std::vector<float> prepareImage(cv::Mat & img, int channel, int net_width, int n
 
     return result;
 }
-
 
 void DoNms(std::vector<Yolo::Detection> & detections, int classes, float nmsThresh)
 {
@@ -101,15 +101,14 @@ void DoNms(std::vector<Yolo::Detection> & detections, int classes, float nmsThre
     std::cout << "Time taken for nms is " << total << " ms." << std::endl;
 }
 
-
-std::vector<Tn::Bbox> postProcessImg(cv::Mat & img, std::vector<Yolo::Detection> & detections,
+std::vector<Tn::Bbox> postProcessImg(cv::Mat const & img, std::vector<Yolo::Detection> & detections,
                                      int classes, float nms_threshold, int net_width, int net_height)
 {
 
     //scale bbox to img
     int width = img.cols;
     int height = img.rows;
-    float scale = std::min(float(net_width)/width,float(h)/height);
+    float scale = std::min(float(net_width)/width,float(net_height)/height);
     float scaleSize[] = {width * scale,height * scale};
 
     //correct box

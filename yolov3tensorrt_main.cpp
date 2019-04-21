@@ -1,7 +1,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <Yolov3TensorRT.hpp>
+#include <TensorRT/Yolov3TensorRT.hpp>
 #include <chrono>
 
 int main(int argc, char* argv[])
@@ -11,11 +11,11 @@ int main(int argc, char* argv[])
 
     auto input = cv::imread(test_image_path);
 
-    Yolov3TensorRT yolo(engine_path, 608, 608, 3, 0.4, 80);
+    yolov3trt::Yolov3TensorRT yolo(engine_path, 608, 608, 3, 0.4, 80);
     yolo.init();
 
     auto start = std::chrono::system_clock::now();
-    auto output = yolo.predict(input);
+    auto output = yolo.predictToBbox(input);
 
     for(auto const & item : output)
     {

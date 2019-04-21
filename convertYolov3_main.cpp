@@ -1,11 +1,11 @@
 #include <opencv2/opencv.hpp>
-#include "TrtNet.h"
-#include "TensorRT/argsParser.h"
-#include "TensorRT/configs.h"
+#include <TrtNet.h>
+#include <TensorRT/argsParser.h>
+#include <TensorRT/configs.h>
 #include <chrono>
-#include "YoloLayer.h"
-#include "TensorRT/dataReader.h"
-#include "eval.h"
+#include <YoloLayer.h>
+#include <TensorRT/dataReader.h>
+#include <TensorRT/eval.h>
 #include <TensorRT/utils.hpp>
 
 using namespace std;
@@ -70,7 +70,7 @@ int main( int argc, char* argv[] )
         while( getline(file,strLine) )                               
         { 
             cv::Mat img = cv::imread(strLine);
-            auto data = prepareImage(img);
+            auto data = prepareImage(img, parser::getIntValue("C"), parser::getIntValue("W"), parser::getIntValue("H"));
             calibData.emplace_back(data);
         } 
         file.close();
@@ -130,7 +130,7 @@ int main( int argc, char* argv[] )
         std::cout << "process: " << filename << std::endl;
 
         cv::Mat img = cv::imread(filename);
-        vector<float> inputData = prepareImage(img);
+        vector<float> inputData = prepareImage(img, parser::getIntValue("C"), parser::getIntValue("W"), parser::getIntValue("H"));
         if (!inputData.data())
             continue;
 
@@ -146,7 +146,7 @@ int main( int argc, char* argv[] )
         result.resize(count);
         memcpy(result.data(), &output[1], count*sizeof(Detection));
 
-        auto boxes = postProcessImg(img,result,classNum);
+        auto boxes = postProcessImgToBbox(img,result,classNum, parser::getFloatValue("nms"), parser::getIntValue("W"), parser::getIntValue("H"));
         outputs.emplace_back(boxes);
     }
     auto end1 = std::chrono::system_clock::now();

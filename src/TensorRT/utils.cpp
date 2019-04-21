@@ -2,7 +2,7 @@
 // Created by wooruang on 19. 4. 18.
 //
 
-#include <utils.hpp>
+#include <TensorRT/utils.hpp>
 
 #include <chrono>
 
@@ -101,28 +101,33 @@ void DoNms(std::vector<Yolo::Detection> & detections, int classes, float nmsThre
     std::cout << "Time taken for nms is " << total << " ms." << std::endl;
 }
 
-std::vector<Tn::Bbox> postProcessImg(cv::Mat const & img, std::vector<Yolo::Detection> & detections,
+void postProcessImg(cv::Mat const & img, std::vector<Yolo::Detection> & detections,
                                      int classes, float nms_threshold, int net_width, int net_height)
 {
 
     //scale bbox to img
     int width = img.cols;
     int height = img.rows;
-    float scale = std::min(float(net_width)/width,float(net_height)/height);
-    float scaleSize[] = {width * scale,height * scale};
+    float scale = std::min(float(net_width) / width, float(net_height) / height);
+    float scaleSize[] = {width * scale, height * scale};
 
     //correct box
-    for (auto & item : detections)
-    {
+    for (auto & item : detections) {
         auto & bbox = item.bbox;
-        bbox[0] = (bbox[0] * net_width - (net_width - scaleSize[0])/2.f) / scaleSize[0];
-        bbox[1] = (bbox[1] * net_height - (net_height - scaleSize[1])/2.f) / scaleSize[1];
+        bbox[0] = (bbox[0] * net_width - (net_width - scaleSize[0]) / 2.f) / scaleSize[0];
+        bbox[1] = (bbox[1] * net_height - (net_height - scaleSize[1]) / 2.f) / scaleSize[1];
         bbox[2] /= scaleSize[0];
         bbox[3] /= scaleSize[1];
     }
 
-    if(nms_threshold > 0)
+    if (nms_threshold > 0)
         DoNms(detections, classes, nms_threshold);
+}
+
+std::vector<Tn::Bbox> toBbox(cv::Mat const & img, std::vector<Yolo::Detection> & detections)
+{
+    int width = img.cols;
+    int height = img.rows;
 
     std::vector<Tn::Bbox> boxes;
     for(auto const & item : detections)
@@ -141,4 +146,42 @@ std::vector<Tn::Bbox> postProcessImg(cv::Mat const & img, std::vector<Yolo::Dete
     }
 
     return boxes;
+}
+
+std::vector<std::vector<float>> toVector(cv::Mat const & img, std::vector<Yolo::Detection> & detections)
+{
+    int width = img.cols;
+    int height = img.rows;
+
+    std::vector<std::vector<float>> boxes;
+    for(auto const & item : detections)
+    {
+        auto & b = item.bbox;
+        std::vector<float> bbox =
+            {
+                static_cast<float>(item.classId),   //classId
+                static_cast<float>(std::max((b[0]-b[2]/2.)*width,0.)), //left
+                static_cast<float>(std::min((b[0]+b[2]/2.)*width, static_cast<double>(width))), //right
+                static_cast<float>(std::max((b[1]-b[3]/2.)*height, 0.)), //top
+                static_cast<float>(std::min((b[1]+b[3]/2.)*height, static_cast<double>(height))), //bot
+                item.prob       //score
+            };
+        boxes.push_back(bbox);
+    }
+
+    return boxes;
+}
+
+std::vector<Tn::Bbox> postProcessImgToBbox(cv::Mat const & img, std::vector<Yolo::Detection> & detections,
+                          int classes, float nms_threshold, int net_width, int net_height)
+{
+    postProcessImg(img, detections, classes, nms_threshold, net_width, net_height);
+    return toBbox(img, detections);
+}
+
+std::vector<std::vector<float>> postProcessImgToVector(cv::Mat const & img, std::vector<Yolo::Detection> & detections,
+                            int classes, float nms_threshold, int net_width, int net_height)
+{
+    postProcessImg(img, detections, classes, nms_threshold, net_width, net_height);
+    return toVector(img, detections);
 }

@@ -24,7 +24,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Ofast -Wfatal-errors -
 
 # Add wrapper.
 # If you do not install at '/usr' or '/usr/local' directories, can set a path of root of your TensorRT.
-set(TENSORRT_ROOT "")
+#set(TENSORRT_ROOT "")
 set(USE_TENSORRT_SHARED ON)
 set(TRT_WRAPPER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tensorRTWrapper/code)
 add_subdirectory(${TRT_WRAPPER_DIR})
@@ -37,17 +37,31 @@ FIND_PACKAGE(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_LIBRARIES_DIRS})
 
+# Add Python.
+find_package (Python3 COMPONENTS Interpreter Development NumPy)
+include_directories(${Python3_INCLUDE_DIRS})
+include_directories(${Python3_NumPy_INCLUDE_DIRS})
+
+message(STATUS "PYTHON INCLUDE DIRS : ${Python3_INCLUDE_DIRS}")
+message(STATUS "PYTHON LIBS : ${Python3_LIBRARIES}")
+message(STATUS "PYTHON NumPy : ${Python3_NumPy_INCLUDE_DIRS}")
+
 # This project dir.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Add TensorRTYolov3 library.
-add_library(TensorRTYolov3 SHARED eval.cpp dataReader.cpp src/utils.cpp src/Yolov3TensorRT.cpp)
+add_library(TensorRTYolov3 SHARED src/TensorRT/dataReader.cpp src/TensorRT/utils.cpp src/TensorRT/eval.cpp src/TensorRT/Yolov3TensorRT.cpp src/TensorRT/Yolov3TensorRT-python.cpp)
 set_target_properties(TensorRTYolov3 PROPERTIES VERSION ${PROJECT_VERSION})
-target_link_libraries(TensorRTYolov3 TrtNet ${OpenCV_LIBS})
+target_link_libraries(TensorRTYolov3 TrtNet ${OpenCV_LIBS} ${Python3_LIBRARIES})
 
 # Add runYolov3 executable.
 add_executable(runYolov3 yolov3tensorrt_main.cpp)
 target_link_libraries(runYolov3 TensorRTYolov3)
 
+# Add convertYolov3 executable.
+add_executable(convertYolov3 convertYolov3_main.cpp)
+target_link_libraries(convertYolov3 TensorRTYolov3)
+
 install(TARGETS runYolov3 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/)
+install(TARGETS convertYolov3 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/)
 install(TARGETS TensorRTYolov3 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/)
